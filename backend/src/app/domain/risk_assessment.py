@@ -12,3 +12,5 @@ class RiskAssessment:
 
     level: RiskLevel
     reason: str
+    confidence: float = 1.0  # rule-based: deterministic, always certain given its own logic.
+                              # ML: actual predict_proba for the winning class.

@@ -58,27 +58,30 @@ class SpatialField:
                 return runtime.last_state
         raise KeyError(anchor_id)
 
+    def interpolate_scalar(self, x: float, y: float, values_by_anchor: dict[str, float]) -> float:
+        """Generic IDW interpolation over any per-anchor scalar. sample_at
+        uses this for EnvironmentState fields; dataset generation reuses
+        it directly on FireEpisodeInjector's multiplier dict to compute
+        ground-truth severity at any point — a value sample_at's
+        EnvironmentState blend never touches."""
+        weights, values = [], []
+        for runtime in self._anchors:
+            distance = math.hypot(x - runtime.anchor.x, y - runtime.anchor.y)
+            anchor_value = values_by_anchor[runtime.anchor.id]
+            if distance < _EPSILON:
+                return anchor_value
+            weights.append(1.0 / (distance**self._idw_power))
+            values.append(anchor_value)
+        total_weight = sum(weights)
+        return sum(w * v for w, v in zip(weights, values)) / total_weight
+
     def sample_at(self, x: float, y: float) -> EnvironmentState:
-        """IDW interpolation of the anchors' current states at an
-        arbitrary (x, y) — a node's or cluster's position."""
         if any(runtime.last_state is None for runtime in self._anchors):
             raise RuntimeError("SpatialField.step() must be called before sampling")
 
-        weights = []
-        for runtime in self._anchors:
-            distance = math.hypot(x - runtime.anchor.x, y - runtime.anchor.y)
-            if distance < _EPSILON:
-                return runtime.last_state  # node sits on the anchor itself
-            weights.append(1.0 / (distance**self._idw_power))
-
-        total_weight = sum(weights)
-        normalized = [w / total_weight for w in weights]
-
         def blend(field: str) -> float:
-            return sum(
-                w * getattr(runtime.last_state, field)
-                for w, runtime in zip(normalized, self._anchors)
-            )
+            values_by_anchor = {rt.anchor.id: getattr(rt.last_state, field) for rt in self._anchors}
+            return self.interpolate_scalar(x, y, values_by_anchor)
 
         rain_intensity = blend("rain_intensity")
         return EnvironmentState(
