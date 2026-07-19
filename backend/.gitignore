@@ -1,0 +1,40 @@
+# --- Python / UV ---
+# Virtual environment (standard naming)
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# UV / Build / Distribution
+.python-version
+.uv.lock
+dist/
+build/
+*.egg-info/
+
+# --- FastAPI / Project Specific ---
+# Local environment variables (Never commit these!)
+.env
+.env.*
+!.env.example
+
+# IDE / Editor Files
+.vscode/
+.idea/
+.DS_Store
+
+# Local Database Files (If using SQLite/local storage)
+*.db
+*.sqlite
+*.sqlite3
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
