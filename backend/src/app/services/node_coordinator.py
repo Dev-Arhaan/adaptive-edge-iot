@@ -63,6 +63,10 @@ class VirtualForest:
         return self._scheduling_history
 
 
+from collections.abc import Callable
+
+from app.services.scheduler_protocol import Scheduler
+
 def create_default_virtual_forest(
     node_count: int = DEFAULT_NODE_COUNT,
     width: float = 1000,
@@ -71,10 +75,13 @@ def create_default_virtual_forest(
     anchor_count: int = DEFAULT_ANCHOR_COUNT,
     tick_duration_seconds: int = 60,
     seed: int = 42,
+    scheduler_factory: Callable[[SchedulingHistory, int], Scheduler] | None = None,
 ) -> VirtualForest:
-    """Composition root — tick_duration_seconds is threaded through both
-    the scheduler and the forest from one place, so they can't silently
-    desync the way two independent defaults could."""
+    """Composition root. scheduler_factory takes (history, tick_duration_seconds)
+    — threading tick_duration_seconds through it, rather than letting a
+    scheduler default it independently, closes the exact desync gap Phase 4
+    already had to fix once. Defaults to Phase 4's rule-based adaptive
+    setup for full backward compatibility with earlier phases."""
     nodes = scatter_nodes(node_count, width, height, seed=seed)
     anchors = scatter_anchors(anchor_count, width, height, seed=seed)
     spatial_field = create_default_spatial_field(anchors, seed=seed)
@@ -87,19 +94,14 @@ def create_default_virtual_forest(
     clusters = cluster_manager.form_clusters(nodes)
 
     scheduling_history = SchedulingHistory()
-    scheduler = AdaptiveScheduler(
-        risk_assessor=RuleBasedRiskAssessor(),
-        policy=SchedulingPolicy(),
-        history=scheduling_history,
-        tick_duration_seconds=tick_duration_seconds,
-    )
+    if scheduler_factory is None:
+        scheduler = AdaptiveScheduler(
+            RuleBasedRiskAssessor(), SchedulingPolicy(), scheduling_history, tick_duration_seconds
+        )
+    else:
+        scheduler = scheduler_factory(scheduling_history, tick_duration_seconds)
 
     return VirtualForest(
-        spatial_field,
-        node_manager,
-        cluster_manager,
-        clusters,
-        scheduler,
-        scheduling_history,
+        spatial_field, node_manager, cluster_manager, clusters, scheduler, scheduling_history,
         tick_duration_seconds=tick_duration_seconds,
     )

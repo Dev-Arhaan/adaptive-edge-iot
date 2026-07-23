@@ -1,3 +1,4 @@
+from app.services.wake_execution import wake_and_sample
 from app.domain.enums import NodeHealth, RiskLevel
 from app.domain.node import Node
 from app.domain.scheduling_decision import SchedulingDecision
@@ -81,23 +82,10 @@ class AdaptiveScheduler:
         return elapsed_seconds >= node.sensing_interval_seconds
 
     def _wake_and_assess(
-        self,
-        node: Node,
-        current_tick: int,
-        spatial_field: SpatialField,
-        node_manager: NodeManager,
-        trigger: str,
+        self, node: Node, current_tick: int, spatial_field: SpatialField, node_manager: NodeManager, trigger: str
     ) -> RiskLevel:
-        node_manager.wake(node.id, current_tick)
-
-        local_env = spatial_field.sample_at(node.x, node.y)
-        node.temperature = local_env.ambient_temperature
-        node.humidity = local_env.ambient_humidity
-        node.smoke = local_env.ambient_smoke
-
-        assessment = self._risk_assessor.assess(
-            SensorReading(temperature=node.temperature, humidity=node.humidity, smoke=node.smoke)
-        )
+        reading = wake_and_sample(node, current_tick, spatial_field, node_manager)
+        assessment = self._risk_assessor.assess(reading)
         interval = self._policy.interval_for(assessment.level)
         node.sensing_interval_seconds = interval
 

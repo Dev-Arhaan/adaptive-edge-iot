@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 
 from app.domain.sensor_reading import SensorReading
-from app.services.dataset_generation.fire_episode_injector import FireEpisodeInjector
+from app.services.scenarios.fire_episode_injector import FireEpisodeInjector
 from app.services.dataset_generation.ground_truth import severity_to_risk_level
 from app.services.risk_assessment.feature_engineering import FEATURE_NAMES, extract_features
 from app.services.spatial_field import create_default_spatial_field, scatter_anchors

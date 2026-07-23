@@ -55,3 +55,10 @@ class FireEpisodeInjector:
 
         baseline[self._origin_anchor_id] = current
         return baseline
+    
+    @property
+    def ignition_tick(self) -> int | None:
+        """Exposed so experiment code can compute detection latency
+        relative to when the fire actually started. None if this episode
+        has no fire at all."""
+        return self._ignition_tick if self._has_fire else None
