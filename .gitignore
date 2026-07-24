@@ -38,3 +38,5 @@ build/
 .coverage
 htmlcov/
 .mypy_cache/
+
+.joblib

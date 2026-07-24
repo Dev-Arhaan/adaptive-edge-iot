@@ -32,7 +32,7 @@ def generate() -> None:
     for episode_id in range(EPISODES):
         anchors = scatter_anchors(count=5, width=1000, height=1000, seed=episode_id)
         field = create_default_spatial_field(anchors, seed=episode_id)
-        injector = FireEpisodeInjector(anchors, EPISODE_LENGTH_TICKS, seed=episode_id)
+        injector = FireEpisodeInjector([a.id for a in anchors], EPISODE_LENGTH_TICKS, seed=episode_id)
 
         for tick in range(EPISODE_LENGTH_TICKS):
             multipliers = injector.multiplier_at(tick)

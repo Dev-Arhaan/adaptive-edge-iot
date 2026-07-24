@@ -9,12 +9,12 @@ def test_awake_node_drains_faster_than_asleep():
     awake_node = scatter_nodes(1, 100, 100, seed=1)[0]
     awake_mgr.register_node(awake_node)
     awake_mgr.wake(awake_node.id, tick=1)
-    awake_mgr.apply_battery_drain()
+    awake_mgr.apply_battery_drain(current_tick=1)
 
     asleep_mgr = NodeManager(battery_model=BatteryDrainModel())
     asleep_node = scatter_nodes(1, 100, 100, seed=1)[0]
     asleep_mgr.register_node(asleep_node)
-    asleep_mgr.apply_battery_drain()
+    asleep_mgr.apply_battery_drain(current_tick=1)
 
     assert awake_mgr.get_node(awake_node.id).battery < asleep_mgr.get_node(asleep_node.id).battery
 
@@ -25,7 +25,7 @@ def test_node_dies_when_battery_depleted():
     manager = NodeManager(battery_model=BatteryDrainModel())
     manager.register_node(node)
     manager.wake(node.id, tick=1)
-    manager.apply_battery_drain()
+    manager.apply_battery_drain(current_tick=1)
 
     assert manager.get_node(node.id).health == NodeHealth.DEAD
     assert manager.get_node(node.id).sleep_state == SleepState.ASLEEP

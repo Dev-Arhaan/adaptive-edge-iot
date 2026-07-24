@@ -1,3 +1,4 @@
+from app.domain.node_event import NodeEvent
 import numpy as np
 
 from app.domain.enums import NodeHealth, SleepState
@@ -19,6 +20,10 @@ class NodeManager:
         self._nodes: dict[str, Node] = {}
         self._battery_model = battery_model
         self._heartbeat_grace_multiplier = heartbeat_grace_multiplier
+        self._events: list[NodeEvent] = []
+
+    def events(self) -> list[NodeEvent]:
+        return list(self._events)
 
     def register_node(self, node: Node) -> None:
         self._nodes[node.id] = node
@@ -42,15 +47,16 @@ class NodeManager:
             return
         node.sleep_state = SleepState.ASLEEP
 
-    def apply_battery_drain(self) -> None:
+    def apply_battery_drain(self, current_tick: int) -> None:
         for node in self._nodes.values():
             if node.health == NodeHealth.DEAD:
                 continue
             is_awake = node.sleep_state == SleepState.AWAKE
             node.battery = self._battery_model.drain(node.battery, is_awake)
-            self._update_health_from_battery(node)
+            self._update_health_from_battery(node, current_tick)
 
-    def _update_health_from_battery(self, node: Node) -> None:
+    def _update_health_from_battery(self, node: Node, current_tick: int) -> None:
+        previous_health = node.health
         if node.battery <= 0:
             node.health = NodeHealth.DEAD
             node.sleep_state = SleepState.ASLEEP
@@ -58,6 +64,12 @@ class NodeManager:
             node.health = NodeHealth.DEGRADED
         else:
             node.health = NodeHealth.HEALTHY
+
+        if node.health != previous_health and node.health in (NodeHealth.DEGRADED, NodeHealth.DEAD):
+            event_type = "died" if node.health == NodeHealth.DEAD else "became_degraded"
+            self._events.append(
+                NodeEvent(tick=current_tick, node_id=node.id, event_type=event_type, detail=f"battery at {node.battery:.1f}%")
+            )
 
     def check_missed_heartbeats(self, current_tick: int, tick_duration_seconds: int) -> list[str]:
         """Flags nodes DEGRADED if they haven't woken within
@@ -71,8 +83,13 @@ class NodeManager:
             expected_ticks = max(1, node.sensing_interval_seconds // tick_duration_seconds)
             elapsed = current_tick - node.last_wake_tick
             if elapsed > expected_ticks * self._heartbeat_grace_multiplier:
+                previous_health = node.health
                 node.health = NodeHealth.DEGRADED
                 flagged.append(node.id)
+                if previous_health != NodeHealth.DEGRADED:
+                    self._events.append(
+                        NodeEvent(tick=current_tick, node_id=node.id, event_type="became_degraded", detail="missed heartbeat")
+                    )
         return flagged
 
 

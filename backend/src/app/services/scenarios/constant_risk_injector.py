@@ -9,8 +9,8 @@ class ConstantRiskInjector:
     (multiplier=1.0) and medium-risk (multiplier>1.0) baseline scenarios.
     """
 
-    def __init__(self, anchors: list[SpatialAnchor], multiplier: float):
-        self._anchor_ids = [a.id for a in anchors]
+    def __init__(self, anchor_ids: list[str], multiplier: float):
+        self._anchor_ids = list(anchor_ids)
         self._multiplier = multiplier
 
     def multiplier_at(self, tick: int) -> dict[str, float]:

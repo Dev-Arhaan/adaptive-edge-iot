@@ -1,8 +1,5 @@
 import numpy as np
 
-from app.domain.spatial_anchor import SpatialAnchor
-
-
 class FireEpisodeInjector:
     """Scripts one fire event's lifecycle (baseline -> ramp up -> peak ->
     ramp down -> baseline) at a single randomly chosen anchor across an
@@ -13,17 +10,16 @@ class FireEpisodeInjector:
 
     def __init__(
         self,
-        anchors: list[SpatialAnchor],
+        anchor_ids: list[str],
         episode_length_ticks: int,
         peak_multiplier: float = 25.0,
         fire_probability: float = 0.6,
         seed: int = 0,
     ):
         rng = np.random.default_rng(seed)
-        self._anchor_ids = [a.id for a in anchors]
+        self._anchor_ids = list(anchor_ids)
         self._peak_multiplier = peak_multiplier
         self._has_fire = rng.random() < fire_probability
-
         if self._has_fire:
             self._origin_anchor_id = rng.choice(self._anchor_ids)
             ramp_span = episode_length_ticks // 3

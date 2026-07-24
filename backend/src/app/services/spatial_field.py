@@ -93,6 +93,8 @@ class SpatialField:
             is_raining=rain_intensity > 0.1,
             rain_intensity=rain_intensity,
         )
+    def anchor_ids(self) -> list[str]:
+        return [runtime.anchor.id for runtime in self._anchors]
 
 
 def scatter_anchors(count: int, width: float, height: float, seed: int = 42) -> list[SpatialAnchor]:

@@ -34,3 +34,8 @@ class SchedulingHistory:
             ),
             "average_interval_seconds": sum(d.new_interval_seconds for d in self._decisions) / total,
         }
+    def latest_by_node(self) -> dict[str, SchedulingDecision]:
+        latest: dict[str, SchedulingDecision] = {}
+        for decision in self._decisions:
+            latest[decision.node_id] = decision  # later entries overwrite earlier ones
+        return latest

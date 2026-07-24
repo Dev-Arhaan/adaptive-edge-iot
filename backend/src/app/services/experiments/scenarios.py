@@ -14,7 +14,7 @@ DEFAULT_ANCHOR_COUNT = 5
 
 def low_risk_scenario(node_count: int = 150, duration_ticks: int = 1440, seed: int = 100) -> dict:
     anchors = scatter_anchors(DEFAULT_ANCHOR_COUNT, DEFAULT_WIDTH, DEFAULT_HEIGHT, seed=seed)
-    injector = ConstantRiskInjector(anchors, multiplier=1.0)
+    injector = ConstantRiskInjector([a.id for a in anchors], multiplier=1.0)
     return dict(node_count=node_count, duration_ticks=duration_ticks, seed=seed, injector=injector, ignition_tick=None)
 
 
@@ -22,7 +22,7 @@ def medium_risk_scenario(
     node_count: int = 150, duration_ticks: int = 1440, seed: int = 200, multiplier: float = 3.0
 ) -> dict:
     anchors = scatter_anchors(DEFAULT_ANCHOR_COUNT, DEFAULT_WIDTH, DEFAULT_HEIGHT, seed=seed)
-    injector = ConstantRiskInjector(anchors, multiplier=multiplier)
+    injector = ConstantRiskInjector([a.id for a in anchors], multiplier=multiplier)
     return dict(node_count=node_count, duration_ticks=duration_ticks, seed=seed, injector=injector, ignition_tick=None)
 
 
@@ -31,7 +31,7 @@ def wildfire_scenario(
 ) -> dict:
     anchors = scatter_anchors(DEFAULT_ANCHOR_COUNT, DEFAULT_WIDTH, DEFAULT_HEIGHT, seed=seed)
     injector = FireEpisodeInjector(
-        anchors, episode_length_ticks=duration_ticks, peak_multiplier=peak_multiplier,
+        [a.id for a in anchors], episode_length_ticks=duration_ticks, peak_multiplier=peak_multiplier,
         fire_probability=1.0, seed=seed,
     )
     return dict(

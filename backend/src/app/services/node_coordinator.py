@@ -1,3 +1,4 @@
+from app.domain.node_event import NodeEvent
 from app.domain.cluster import Cluster
 from app.domain.node import Node
 from app.services.adaptive_scheduler import AdaptiveScheduler
@@ -40,18 +41,19 @@ class VirtualForest:
         self._spatial_field.step(fire_risk_by_anchor)
 
         self._scheduler.step(
-            nodes=self._node_manager.all_nodes(),
-            spatial_field=self._spatial_field,
-            node_manager=self._node_manager,
-            current_tick=current_tick,
+            nodes=self._node_manager.all_nodes(), spatial_field=self._spatial_field,
+            node_manager=self._node_manager, current_tick=current_tick,
         )
 
-        self._node_manager.apply_battery_drain()
+        self._node_manager.apply_battery_drain(current_tick)
         self._node_manager.check_missed_heartbeats(current_tick, self._tick_duration_seconds)
 
         nodes_by_id = {n.id: n for n in self._node_manager.all_nodes()}
         for cluster in self._clusters.values():
             self._cluster_manager.reelect_head_if_needed(cluster, nodes_by_id)
+
+    def node_events(self) -> list[NodeEvent]:
+        return self._node_manager.events()
 
     def all_nodes(self) -> list[Node]:
         return self._node_manager.all_nodes()
@@ -61,6 +63,9 @@ class VirtualForest:
 
     def scheduling_history(self) -> SchedulingHistory:
         return self._scheduling_history
+    
+    def anchor_ids(self) -> list[str]:
+        return self._spatial_field.anchor_ids()
 
 
 from collections.abc import Callable

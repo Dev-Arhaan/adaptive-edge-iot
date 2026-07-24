@@ -1,3 +1,4 @@
+from app.core.auth import require_auth
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -16,8 +17,7 @@ from app.services.risk_assessment.feature_engineering import extract_features
 from app.services.risk_assessment.ml_risk_assessor import MLRiskAssessor
 from app.services.risk_assessment.shap_explainer import ShapExplainer
 
-router = APIRouter(prefix="/predictions", tags=["predictions"])
-
+router = APIRouter(prefix="/predictions", tags=["predictions"], dependencies=[Depends(require_auth)])
 
 @router.post("/risk", response_model=RiskPredictionResponse)
 def predict_risk(
